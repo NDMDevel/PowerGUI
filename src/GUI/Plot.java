@@ -32,7 +32,6 @@ public final class Plot extends JPanel
     public Plot(boolean monofasico,double frec,double[] disparo,boolean rectificador,boolean semicontrolado)
     {
         dataPlot = new XYSeriesCollection();
-
         if( disparo == null )
             dataPlot.addSeries(CreateCursor("Disparo",Deg2Time(0,frec),frec,rectificador,semicontrolado,monofasico,((double)0)/20));
         else
@@ -72,6 +71,12 @@ public final class Plot extends JPanel
         chart = ChartFactory.createXYLineChart(null,"Tiempo [Segundos]","Amplitud Normalizada [Volts]",dataPlot);
         XYPlot plot = chart.getXYPlot();
         plot.setBackgroundPaint(Color.BLACK);
+        if( monofasico == false && rectificador == false )
+        {
+            plot.getRendererForDataset(plot.getDataset(0)).setSeriesPaint(0, Color.red);
+            plot.getRendererForDataset(plot.getDataset(0)).setSeriesPaint(1, Color.blue);
+            plot.getRendererForDataset(plot.getDataset(0)).setSeriesPaint(2, Color.green);
+        }
         add("Ondas",new ChartPanel(chart));
     }
     private XYSeries CreateSerie(String name,double frec)
@@ -79,9 +84,9 @@ public final class Plot extends JPanel
         if( name.equals("Fase R") == true )
             return CreateSerie(name,0.0,frec);
         if( name.equals("Fase S") == true )
-            return CreateSerie(name,2.0*Math.PI/3.0,frec);
+            return CreateSerie(name,-2.0*Math.PI/3.0,frec);
         if( name.equals("Fase T") == true )
-            return CreateSerie(name,4.0*Math.PI/3.0,frec);
+            return CreateSerie(name,-4.0*Math.PI/3.0,frec);
         return null;
     }
     private XYSeries CreateSerie(String name,double fase,double frec)

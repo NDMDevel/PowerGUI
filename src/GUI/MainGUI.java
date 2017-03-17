@@ -5,8 +5,12 @@
  */
 package GUI;
 
+import java.awt.Dimension;
+import java.awt.Image;
+import java.awt.Toolkit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.swing.ImageIcon;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
@@ -21,6 +25,7 @@ public class MainGUI extends javax.swing.JFrame
     private final double anguloDisparoMaximo;
     private final double anguloDisparoMinimo;
     private double anguloDisparo;
+    private int h,w;
     public MainGUI()
     {
         initComponents();
@@ -35,7 +40,13 @@ public class MainGUI extends javax.swing.JFrame
         jSlider_AnguloDisparo.setMaximum((int)(1.0/resolucionAnguloDisparo));
         jSlider_AnguloDisparo.setValue((int)(anguloDisparoMinimo*resolucionAnguloDisparo));
         jTextField_AnguloDisparo.setText(Double.toString(anguloDisparoMinimo*180.0/Math.PI));
-        jTabbedPane_Onda_Circuito.addTab("Circuito",new Plot());
+        Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
+        //System.out.println("H: "+screenSize.height+"W "+screenSize.width);
+        //CrearCircuito("./Circuitos/RectificadorTrifasico_TotalmenteControlado.png",screenSize.width/2,screenSize.height/2);
+        //CrearCircuito("./Circuitos/RectificadorTrifasico_SemiControlado.png",screenSize.width/2,screenSize.height/2);
+        UpdateCircuito();
+        //CrearCircuito("./Circuitos/ConversorAC_Trifasico.png",screenSize.width/2,screenSize.height/2);
+        jTabbedPane_Onda_Circuito.setSelectedIndex(0);
 
         //Cambia Look&Feel
         try
@@ -52,6 +63,35 @@ public class MainGUI extends javax.swing.JFrame
         }
         SwingUtilities.updateComponentTreeUI(this);
         pack();
+    }
+    
+    private void UpdateCircuito()
+    {
+        String circuito = "./Circuitos/";
+        if( jComboBox_ConvertidorTipo.getSelectedItem().toString().equals("Rectificador (AC/DC)") == true )
+        {
+            circuito += "Rectificador";
+            if( jComboBox_RectificadorTipo.getSelectedItem().toString().equals("Semi Controlado") == true )
+                circuito += "SemiControlado";
+            else
+                circuito += "TotalmenteControlado";
+        }
+        else
+            circuito += "ConversorAC";
+        if( jComboBox_SelectorFases.getSelectedItem().toString().equals("Monofasico") == true )
+            circuito += "Monofasico";
+        else
+            circuito += "Trifasico";
+        circuito += ".png";
+        
+        Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
+        w = screenSize.width/2;
+        h = screenSize.height/2;
+        ImageIcon imageIcon = new ImageIcon(circuito); // load the image to a imageIcon
+        Image image = imageIcon.getImage(); // transform it 
+        Image newimg = image.getScaledInstance(w,h,java.awt.Image.SCALE_SMOOTH); // scale it the smooth way  
+        imageIcon = new ImageIcon(newimg);  // transform it back
+        jLabel_Circuito.setIcon(imageIcon);
     }
     
     private void ActualizarGUI()
@@ -80,13 +120,16 @@ public class MainGUI extends javax.swing.JFrame
         
         if( jTabbedPane_Onda_Circuito.getTabCount() > 1 )
         {
+            int idx_selected = jTabbedPane_Onda_Circuito.getSelectedIndex();
             int idx = jTabbedPane_Onda_Circuito.indexOfTab("Formas de Onda");
             jTabbedPane_Onda_Circuito.remove(idx);
             jTabbedPane_Onda_Circuito.insertTab("Formas de Onda",null,new Plot(monofasico,frec,disparoArray,rectificador,semicontrolado),null,idx);
-            jTabbedPane_Onda_Circuito.setSelectedIndex(idx);
+            //jTabbedPane_Onda_Circuito.setSelectedIndex(idx);
+            jTabbedPane_Onda_Circuito.setSelectedIndex(idx_selected);
         }
         else
             jTabbedPane_Onda_Circuito.insertTab("Formas de Onda",null,new Plot(monofasico,frec,disparoArray,rectificador,semicontrolado),null,0);
+        UpdateCircuito();        
     }
     
     private void InicializarDisparos(double []disparoArray,double disparo,double frec,boolean monofasico,boolean rectificador)
@@ -94,7 +137,7 @@ public class MainGUI extends javax.swing.JFrame
         disparoArray[0] = disparo;
         if( monofasico == false )
             for( int i=1 ; i<3 ; i++ )
-                disparoArray[i] = disparo + ((double)3-i)*2.0/3.0*180.0;
+                disparoArray[i] = disparo + ((double)i)*2.0/3.0*180.0;
     }
     
     private double ValidarAnguloDisparo()
@@ -152,6 +195,7 @@ public class MainGUI extends javax.swing.JFrame
         jComboBox_RectificadorTipo = new javax.swing.JComboBox();
         jLabel_Frecuencia = new javax.swing.JLabel();
         jTabbedPane_Onda_Circuito = new javax.swing.JTabbedPane();
+        jLabel_Circuito = new javax.swing.JLabel();
         jButton1 = new javax.swing.JButton();
         jButton3 = new javax.swing.JButton();
         jComboBox_Frecuencia = new javax.swing.JComboBox();
@@ -167,6 +211,11 @@ public class MainGUI extends javax.swing.JFrame
 
         jComboBox_ConvertidorTipo.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Rectificador (AC/DC)", "Conversor de AC (AC/AC)" }));
         jComboBox_ConvertidorTipo.setFocusable(false);
+        jComboBox_ConvertidorTipo.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jComboBox_ConvertidorTipoActionPerformed(evt);
+            }
+        });
 
         jComboBox_SelectorFases.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Monofasico", "Trifasico" }));
         jComboBox_SelectorFases.setFocusable(false);
@@ -178,14 +227,27 @@ public class MainGUI extends javax.swing.JFrame
 
         jComboBox_RectificadorTipo.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Semi Controlado", "Total Controlado" }));
         jComboBox_RectificadorTipo.setFocusable(false);
+        jComboBox_RectificadorTipo.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jComboBox_RectificadorTipoActionPerformed(evt);
+            }
+        });
 
         jLabel_Frecuencia.setText("Frecuencia [Hz]:");
 
         jTabbedPane_Onda_Circuito.setFocusable(false);
 
+        jLabel_Circuito.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        jTabbedPane_Onda_Circuito.addTab("Circuito", jLabel_Circuito);
+
         jButton1.setIcon(new javax.swing.ImageIcon(getClass().getResource("/Icons/download-icon-32px.png"))); // NOI18N
         jButton1.setToolTipText("Escribir configuracion");
         jButton1.setFocusable(false);
+        jButton1.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton1ActionPerformed(evt);
+            }
+        });
 
         jButton3.setIcon(new javax.swing.ImageIcon(getClass().getResource("/Icons/upload-icon-32px.png"))); // NOI18N
         jButton3.setToolTipText("Leer configuracion");
@@ -348,6 +410,7 @@ public class MainGUI extends javax.swing.JFrame
         double diff = Math.abs(((double)slider)*resolucionAnguloDisparo*anguloDisparoMaximo-disparo);
         if( diff > (resolucionAnguloDisparo*anguloDisparoMaximo) || diff < 1e-9 )
             jTextField_AnguloDisparo.setText(FormateoDisparo(angStr));
+        jTabbedPane_Onda_Circuito.setSelectedIndex(jTabbedPane_Onda_Circuito.indexOfTab("Formas de Onda"));
         ActualizarGUI();
     }//GEN-LAST:event_jSlider_AnguloDisparoStateChanged
 
@@ -383,6 +446,25 @@ public class MainGUI extends javax.swing.JFrame
         if( evt.getKeyCode() == 10 )    //ENTER key
             jTextField_AnguloDisparoFocusLost(null);
     }//GEN-LAST:event_jTextField_AnguloDisparoKeyPressed
+
+    private void jComboBox_ConvertidorTipoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jComboBox_ConvertidorTipoActionPerformed
+        // TODO add your handling code here:
+        if( jComboBox_ConvertidorTipo.getSelectedItem().toString().equals("Rectificador (AC/DC)") == true )
+            jComboBox_RectificadorTipo.setEnabled(true);
+        else
+            jComboBox_RectificadorTipo.setEnabled(false);
+        ActualizarGUI();
+    }//GEN-LAST:event_jComboBox_ConvertidorTipoActionPerformed
+
+    private void jComboBox_RectificadorTipoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jComboBox_RectificadorTipoActionPerformed
+        // TODO add your handling code here:
+        ActualizarGUI();
+    }//GEN-LAST:event_jComboBox_RectificadorTipoActionPerformed
+
+    private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
+        // TODO add your handling code here:
+        System.out.println(jTabbedPane_Onda_Circuito.getSelectedIndex());
+    }//GEN-LAST:event_jButton1ActionPerformed
 
     /**
      * @param args the command line arguments
@@ -427,6 +509,7 @@ public class MainGUI extends javax.swing.JFrame
     private javax.swing.JComboBox jComboBox_Frecuencia;
     private javax.swing.JComboBox jComboBox_RectificadorTipo;
     private javax.swing.JComboBox jComboBox_SelectorFases;
+    private javax.swing.JLabel jLabel_Circuito;
     private javax.swing.JLabel jLabel_Frecuencia;
     private javax.swing.JMenu jMenu1;
     private javax.swing.JMenu jMenu2;
