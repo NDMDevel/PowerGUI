@@ -5,7 +5,6 @@
  */
 package GUI;
 
-import java.awt.Component;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.SwingUtilities;
@@ -31,7 +30,6 @@ public class MainGUI extends javax.swing.JFrame
         anguloDisparoMaximo = Math.PI;
         anguloDisparoMinimo = 0; //aprox 7°
         anguloDisparo = anguloDisparoMinimo;
-        
 
         //Modifica objetos de la GUI
         jSlider_AnguloDisparo.setMaximum((int)(1.0/resolucionAnguloDisparo));
@@ -62,20 +60,41 @@ public class MainGUI extends javax.swing.JFrame
         boolean monofasico = false;
         if( jComboBox_SelectorFases.getSelectedItem().toString().equals("Monofasico") == true )
             monofasico = true;
-        double disparo = Double.valueOf(jTextField_AnguloDisparo.getText());
+        String dispStr = jTextField_AnguloDisparo.getText();
+        double disparo = Double.valueOf(dispStr);
         if( jComboBox_AnguloDisparoUnidad.getSelectedItem().toString().equals("Rad") == true )
             disparo = disparo*180.0/Math.PI;
+
+        int fases = 1;
+        if( monofasico == false )
+            fases = 3;
+        double disparoArray[] = new double[fases];
+        boolean rectificador = true;
+        if( jComboBox_ConvertidorTipo.getSelectedItem().toString().equals("Rectificador (AC/DC)") == false )
+            rectificador = false;
+        boolean semicontrolado = true;
+        if( jComboBox_RectificadorTipo.getSelectedItem().toString().equals("Semi Controlado") == false )
+            semicontrolado = false;
+        
+        InicializarDisparos(disparoArray,disparo,frec,monofasico,rectificador);
+        
         if( jTabbedPane_Onda_Circuito.getTabCount() > 1 )
         {
-//            jTabbedPane_Onda_Circuito.remove(1);
             int idx = jTabbedPane_Onda_Circuito.indexOfTab("Formas de Onda");
             jTabbedPane_Onda_Circuito.remove(idx);
-            jTabbedPane_Onda_Circuito.insertTab("Formas de Onda",null,new Plot(monofasico,frec,disparo),null,idx);
+            jTabbedPane_Onda_Circuito.insertTab("Formas de Onda",null,new Plot(monofasico,frec,disparoArray,rectificador,semicontrolado),null,idx);
             jTabbedPane_Onda_Circuito.setSelectedIndex(idx);
         }
         else
-            jTabbedPane_Onda_Circuito.insertTab("Formas de Onda",null,new Plot(monofasico,frec,disparo),null,0);
-//        jTabbedPane_Onda_Circuito.addTab("Formas de Onda",new Plot(monofasico,frec,disparo));
+            jTabbedPane_Onda_Circuito.insertTab("Formas de Onda",null,new Plot(monofasico,frec,disparoArray,rectificador,semicontrolado),null,0);
+    }
+    
+    private void InicializarDisparos(double []disparoArray,double disparo,double frec,boolean monofasico,boolean rectificador)
+    {
+        disparoArray[0] = disparo;
+        if( monofasico == false )
+            for( int i=1 ; i<3 ; i++ )
+                disparoArray[i] = disparo + ((double)3-i)*2.0/3.0*180.0;
     }
     
     private double ValidarAnguloDisparo()
@@ -84,12 +103,20 @@ public class MainGUI extends javax.swing.JFrame
         try
         {
             disparo = Double.valueOf(jTextField_AnguloDisparo.getText());
+            if( jComboBox_AnguloDisparoUnidad.getSelectedItem().toString().equals("Deg") == true )
+                disparo *= Math.PI/180.0;
+            if( disparo > Math.PI || disparo < 0 )
+                disparo = anguloDisparo;
         }
         catch(NumberFormatException ex)
         {
             System.out.println(ex.toString());
             disparo = anguloDisparo;
         }
+        if( jComboBox_AnguloDisparoUnidad.getSelectedItem().toString().equals("Deg") == true )
+            jTextField_AnguloDisparo.setText(FormateoDisparo(disparo*180.0/Math.PI));
+        else
+            jTextField_AnguloDisparo.setText(FormateoDisparo(disparo));
         return disparo;
     }
     
@@ -97,7 +124,7 @@ public class MainGUI extends javax.swing.JFrame
     {
         String angStr = Double.toString(disparo);
         int idx = angStr.lastIndexOf(".");
-        if( angStr.length()-idx > 4 )
+        if( angStr.length()-idx > 6 && idx != -1 )
             angStr = String.valueOf(Double.valueOf(angStr.substring(0,idx+6)));
         return angStr;
     }
@@ -106,7 +133,7 @@ public class MainGUI extends javax.swing.JFrame
     {
         String angStr = disparo;
         int idx = angStr.lastIndexOf(".");
-        if( angStr.length()-idx > 4 )
+        if( angStr.length()-idx > 6 && idx != -1 )
             angStr = String.valueOf(Double.valueOf(angStr.substring(0,idx+6)));
         return angStr;
     }
@@ -159,11 +186,6 @@ public class MainGUI extends javax.swing.JFrame
         jButton1.setIcon(new javax.swing.ImageIcon(getClass().getResource("/Icons/download-icon-32px.png"))); // NOI18N
         jButton1.setToolTipText("Escribir configuracion");
         jButton1.setFocusable(false);
-        jButton1.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jButton1ActionPerformed(evt);
-            }
-        });
 
         jButton3.setIcon(new javax.swing.ImageIcon(getClass().getResource("/Icons/upload-icon-32px.png"))); // NOI18N
         jButton3.setToolTipText("Leer configuracion");
@@ -235,17 +257,9 @@ public class MainGUI extends javax.swing.JFrame
                 jTextField_AnguloDisparoFocusLost(evt);
             }
         });
-        jTextField_AnguloDisparo.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jTextField_AnguloDisparoActionPerformed(evt);
-            }
-        });
         jTextField_AnguloDisparo.addKeyListener(new java.awt.event.KeyAdapter() {
             public void keyPressed(java.awt.event.KeyEvent evt) {
                 jTextField_AnguloDisparoKeyPressed(evt);
-            }
-            public void keyTyped(java.awt.event.KeyEvent evt) {
-                jTextField_AnguloDisparoKeyTyped(evt);
             }
         });
 
@@ -319,34 +333,33 @@ public class MainGUI extends javax.swing.JFrame
 
     private void jSlider_AnguloDisparoStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_jSlider_AnguloDisparoStateChanged
         // TODO add your handling code here:
-        anguloDisparo = jSlider_AnguloDisparo.getValue()*resolucionAnguloDisparo*anguloDisparoMaximo;
+        int slider = jSlider_AnguloDisparo.getValue();
+        anguloDisparo = ((double)slider)*resolucionAnguloDisparo*anguloDisparoMaximo;
         String angStr;
+        double disparo = Double.valueOf(jTextField_AnguloDisparo.getText());
         if( jComboBox_AnguloDisparoUnidad.getSelectedItem().toString().equals("Deg") == true )
+        {
             angStr = Double.toString(anguloDisparo*180.0/Math.PI);  //convierte a grados
+            disparo *= Math.PI/180.0;
+        }
         else
             angStr = Double.toString(anguloDisparo);    //lo deja en rad
 
-        jTextField_AnguloDisparo.setText(FormateoDisparo(angStr));
+        double diff = Math.abs(((double)slider)*resolucionAnguloDisparo*anguloDisparoMaximo-disparo);
+        if( diff > (resolucionAnguloDisparo*anguloDisparoMaximo) || diff < 1e-9 )
+            jTextField_AnguloDisparo.setText(FormateoDisparo(angStr));
         ActualizarGUI();
     }//GEN-LAST:event_jSlider_AnguloDisparoStateChanged
-   
-    private void jTextField_AnguloDisparoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jTextField_AnguloDisparoActionPerformed
-        // TODO add your handling code here:
-    }//GEN-LAST:event_jTextField_AnguloDisparoActionPerformed
 
     private void jComboBox_AnguloDisparoUnidadActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jComboBox_AnguloDisparoUnidadActionPerformed
         // TODO add your handling code here:
-        double disparo = Double.valueOf(jTextField_AnguloDisparo.getText());
         if( jComboBox_AnguloDisparoUnidad.getSelectedItem().toString().equals("Rad") == true )
             jTextField_AnguloDisparo.setText(FormateoDisparo(anguloDisparo));
         else
             jTextField_AnguloDisparo.setText(FormateoDisparo(anguloDisparo*180.0/Math.PI));
+        anguloDisparo = ValidarAnguloDisparo();
         ActualizarGUI();
     }//GEN-LAST:event_jComboBox_AnguloDisparoUnidadActionPerformed
-
-    private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
-        // TODO add your handling code here:
-    }//GEN-LAST:event_jButton1ActionPerformed
 
     private void jComboBox_FrecuenciaActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jComboBox_FrecuenciaActionPerformed
         // TODO add your handling code here:
@@ -360,29 +373,15 @@ public class MainGUI extends javax.swing.JFrame
 
     private void jTextField_AnguloDisparoFocusLost(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_jTextField_AnguloDisparoFocusLost
         // TODO add your handling code here:
-/*        anguloDisparo = Double.valueOf(jTextField_AnguloDisparo.getText());
-        if( jComboBox_AnguloDisparoUnidad.getSelectedItem().toString().equals("Rad") == true )
-        {
-            int x = (int)(anguloDisparoMaximo/anguloDisparo/resolucionAnguloDisparo);
-            jSlider_AnguloDisparo.setValue(x);
-        }
-        else
-        {
-            jSlider_AnguloDisparo.setValue((int)(resolucionAnguloDisparo*anguloDisparoMaximo/(anguloDisparo)));
-        }*/
-        System.out.println("Out");
+        anguloDisparo = ValidarAnguloDisparo();
+        jSlider_AnguloDisparo.setValue((int)(anguloDisparo/anguloDisparoMaximo/resolucionAnguloDisparo));
+        ActualizarGUI();
     }//GEN-LAST:event_jTextField_AnguloDisparoFocusLost
-
-    private void jTextField_AnguloDisparoKeyTyped(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_jTextField_AnguloDisparoKeyTyped
-        // TODO add your handling code here:
-    }//GEN-LAST:event_jTextField_AnguloDisparoKeyTyped
 
     private void jTextField_AnguloDisparoKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_jTextField_AnguloDisparoKeyPressed
         // TODO add your handling code here:
         if( evt.getKeyCode() == 10 )    //ENTER key
-        {
-            System.out.println("Ang: "+ValidarAnguloDisparo());
-        }
+            jTextField_AnguloDisparoFocusLost(null);
     }//GEN-LAST:event_jTextField_AnguloDisparoKeyPressed
 
     /**
