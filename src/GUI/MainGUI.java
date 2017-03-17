@@ -8,8 +8,10 @@ package GUI;
 import java.awt.Dimension;
 import java.awt.Image;
 import java.awt.Toolkit;
+import java.io.IOException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.imageio.ImageIO;
 import javax.swing.ImageIcon;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
@@ -26,7 +28,7 @@ public class MainGUI extends javax.swing.JFrame
     private final double anguloDisparoMinimo;
     private double anguloDisparo;
     private int h,w;
-    public MainGUI()
+    public MainGUI() throws IOException
     {
         initComponents();
         
@@ -48,6 +50,11 @@ public class MainGUI extends javax.swing.JFrame
         //CrearCircuito("./Circuitos/ConversorAC_Trifasico.png",screenSize.width/2,screenSize.height/2);
         jTabbedPane_Onda_Circuito.setSelectedIndex(0);
 
+        String IconName = "1489788883_plugs_512pxGREY.png";
+        ImageIcon imageIcon = new ImageIcon("Icons/"+IconName); // load the image to a imageIcon
+        Image image = imageIcon.getImage(); // transform it 
+        setIconImage(image);  //carga el icono en la aplicacion
+        
         //Cambia Look&Feel
         try
         {
@@ -240,6 +247,7 @@ public class MainGUI extends javax.swing.JFrame
         jLabel_Circuito.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         jTabbedPane_Onda_Circuito.addTab("Circuito", jLabel_Circuito);
 
+        jButton1.setBackground(new java.awt.Color(255, 51, 51));
         jButton1.setIcon(new javax.swing.ImageIcon(getClass().getResource("/Icons/download-icon-32px.png"))); // NOI18N
         jButton1.setToolTipText("Escribir configuracion");
         jButton1.setFocusable(false);
@@ -249,6 +257,7 @@ public class MainGUI extends javax.swing.JFrame
             }
         });
 
+        jButton3.setBackground(new java.awt.Color(0, 204, 51));
         jButton3.setIcon(new javax.swing.ImageIcon(getClass().getResource("/Icons/upload-icon-32px.png"))); // NOI18N
         jButton3.setToolTipText("Leer configuracion");
         jButton3.setFocusable(false);
@@ -463,7 +472,6 @@ public class MainGUI extends javax.swing.JFrame
 
     private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
         // TODO add your handling code here:
-        System.out.println(jTabbedPane_Onda_Circuito.getSelectedIndex());
     }//GEN-LAST:event_jButton1ActionPerformed
 
     /**
@@ -496,7 +504,11 @@ public class MainGUI extends javax.swing.JFrame
         /* Create and display the form */
         java.awt.EventQueue.invokeLater(new Runnable() {
             public void run() {
-                new MainGUI().setVisible(true);
+                try {
+                    new MainGUI().setVisible(true);
+                } catch (IOException ex) {
+                    Logger.getLogger(MainGUI.class.getName()).log(Level.SEVERE, null, ex);
+                }
             }
         });
     }
